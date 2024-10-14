@@ -30,25 +30,17 @@ on:
       - "feature/**"
       - "fix/**"
       - "pr/**"
-  schedule:
-    # Automatically run on every Day
-    - cron: "0 17 * * *"
   workflow_dispatch:
 
 jobs:
   buildx:
-    runs-on: 1H1G
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4.2.1
         with:
           # [Required] Access token with `workflow` scope.
           token: ${{ secrets.WORKFLOW_SECRET }}
-      # - name: Bypass Cloudflare for GitHub Action
-      #   uses: xiaotianxt/bypass-cloudflare-for-github-action@v1.0.0
-      #   with:
-      #     cf_zone_id: ${{ secrets.CF_ZONE_ID }}
-      #     cf_api_key: ${{ secrets.CF_API_KEY }}
       - name: Set env variables
         run: |
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
@@ -69,24 +61,13 @@ jobs:
             env.http_proxy=${{ env.http_proxy }}
             env.https_proxy=${{ env.http_proxy }}
             env.no_proxy=${{ env.no_proxy }}
-      - name: Login to DockerHub
-        uses: docker/login-action@v3.3.0
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3.3.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5.5.1
         with:
           images: |
-            name=snowdreamtech/debian,enable=true
-            name=ghcr.io/snowdreamtech/debian,enable=true
+            name=snowdreamtechtest/debian,enable=true
+            name=ghcr.io/snowdreamtechtest/debian,enable=true
           flavor: |
             latest=false  
             prefix=
@@ -116,7 +97,7 @@ jobs:
             VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
             REVISION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.revision'] }}
           platforms: linux/386,linux/amd64,linux/arm/v5,linux/arm/v7,linux/arm64,linux/mips64le,linux/ppc64le,linux/s390x
-          push: ${{ github.event_name != 'pull_request' && !startsWith(github.ref, 'refs/heads/feat/') && !startsWith(github.ref, 'refs/heads/feature/') && !startsWith(github.ref, 'refs/heads/fix/') && !startsWith(github.ref, 'refs/heads/pr/') }}
+          push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
